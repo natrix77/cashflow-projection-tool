@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Frame-Options" content="ALLOW-FROM https://www.notion.so/">
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://www.notion.so https://*.notion.so;">
+    <title>Cash Flow Projection Tool (Notion)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        /* Notion-specific styles for more compact layout */
+        body {
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .app-container {
+            max-width: 100%;
+            padding: 10px;
+        }
+        
+        header {
+            padding: 10px 0;
+        }
+        
+        header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .two-column-layout {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .right-column, .left-column {
+            width: 100%;
+        }
+        
+        .chart-container {
+            height: 300px;
+        }
+        
+        footer {
+            padding: 5px 0;
+        }
+        
+        .data-import-section, .actual-data-import-section {
+            padding: 10px;
+        }
+        
+        .stats {
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            min-width: 120px;
+            padding: 10px;
+            margin: 5px;
+        }
+        
+        @media (min-width: 768px) {
+            .two-column-layout {
+                flex-direction: row;
+            }
+            
+            .right-column, .left-column {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> Cash Flow Projection Tool</h1>
+        </header>
+        
+        <main>
+            <div class="data-import-section">
+                <div class="file-input-container">
+                    <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                    <button id="file-select-button" class="primary-button">
+                        <i class="fas fa-file-csv"></i> Select CSV File
+                    </button>
+                    <span id="file-name">No file selected</span>
+                    <button id="clear-data-button" class="secondary-button">
+                        <i class="fas fa-trash"></i> Clear Data
+                    </button>
+                </div>
+                <div class="save-load-container">
+                    <input type="file" id="load-state-input" accept=".json" class="hidden">
+                    <button id="save-state-button" class="primary-button">
+                        <i class="fas fa-save"></i> Save State
+                    </button>
+                    <button id="load-state-button" class="secondary-button">
+                        <i class="fas fa-upload"></i> Load State
+                    </button>
+                </div>
+            </div>
+
+            <div class="two-column-layout">
+                <div class="left-column">
+                    <div class="projection-results">
+                        <h2>Current Status</h2>
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-title">Current Balance</div>
+                                <div id="current-balance" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Monthly Expenses</div>
+                                <div id="monthly-expenses" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Months Until Broke</div>
+                                <div id="months-until-broke" class="stat-value">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="scenarios-management">
+                        <h2>Scenarios</h2>
+                        <div class="scenario-tabs">
+                            <div class="scenario-tab active" data-scenario="current">Current</div>
+                            <div class="scenario-tab" data-scenario="scenario1">Scenario 1</div>
+                            <div class="scenario-tab" data-scenario="scenario2">Scenario 2</div>
+                        </div>
+                        
+                        <div class="active-scenario-container">
+                            <div class="scenario-controls">
+                                <h3>Burn Rate</h3>
+                                <div class="slider-container">
+                                    <input type="range" id="burn-rate-slider" min="0.5" max="1.5" step="0.05" value="1">
+                                    <span id="burn-rate-value">100%</span>
+                                </div>
+                                
+                                <h3>Add Income</h3>
+                                <div class="income-input">
+                                    <div class="input-group">
+                                        <label for="income-date">Date:</label>
+                                        <input type="date" id="income-date">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="income-amount">Amount:</label>
+                                        <input type="number" id="income-amount" min="0" step="1000">
+                                    </div>
+                                    <button id="add-income-button" class="primary-button">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-column">
+                    <div class="chart-container expanded">
+                        <h2>Cash Flow Projection</h2>
+                        <canvas id="cash-flow-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
