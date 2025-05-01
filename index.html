@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow Projection Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> Cash Flow Projection Tool</h1>
+            <div class="header-actions">
+                <button id="help-button" class="help-button">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
+        </header>
+        
+        <main>
+            <div class="data-import-section">
+                <h2>Data Import</h2>
+                <div class="file-input-container">
+                    <input type="file" id="csv-file-input" accept=".csv" class="hidden">
+                    <button id="file-select-button" class="primary-button">
+                        <i class="fas fa-file-csv"></i> Select CSV File
+                    </button>
+                    <span id="file-name">No file selected</span>
+                    <button id="clear-data-button" class="secondary-button">
+                        <i class="fas fa-trash"></i> Clear All Data
+                    </button>
+                </div>
+                <div class="save-load-container">
+                    <input type="file" id="load-state-input" accept=".json" class="hidden">
+                    <button id="save-state-button" class="primary-button">
+                        <i class="fas fa-save"></i> Save Current State
+                    </button>
+                    <button id="load-state-button" class="secondary-button">
+                        <i class="fas fa-upload"></i> Load Saved State
+                    </button>
+                </div>
+                <div class="options">
+                    <label>
+                        <input type="checkbox" id="normalize-years">
+                        Normalize future years to current year
+                    </label>
+                </div>
+                <div class="file-format-info">
+                    <p><i class="fas fa-info-circle"></i> Expected CSV format: semicolon-separated (;) with columns for date, amount, and balance. Greek characters are supported.</p>
+                    <p><i class="fas fa-info-circle"></i> You can save your current work as a JSON file for backup or future editing. Load saved JSON files to continue working on a previous state.</p>
+                    <p><a href="backup/qcell-2025-29.apr.csv" download><i class="fas fa-download"></i> Download sample CSV file</a></p>
+                </div>
+            </div>
+
+            <div class="actual-data-import-section">
+                <h2>Actual Monthly Expenses</h2>
+                <div class="monthly-data-container">
+                    <h3>Monthly Expense Data</h3>
+                    <div class="monthly-data-form">
+                        <div class="input-group">
+                            <label for="month-selector">Month:</label>
+                            <select id="month-selector">
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="year-selector">Year:</label>
+                            <select id="year-selector">
+                                <!-- Will be populated with JavaScript -->
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="actual-expense">Actual Expense:</label>
+                            <input type="number" id="actual-expense" min="0" step="100">
+                        </div>
+                        <button id="add-actual-expense-button" class="primary-button">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+                <div class="actual-expense-list-container">
+                    <h3>Recorded Actual Expenses</h3>
+                    <div class="table-wrapper">
+                        <table id="actual-expenses-table">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Year</th>
+                                    <th>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Actual expense data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="file-format-info">
+                    <p><i class="fas fa-info-circle"></i> Add actual monthly expenses to compare with projected expenses.</p>
+                </div>
+            </div>
+
+            <div class="two-column-layout">
+                <div class="left-column">
+                    <div class="projection-results">
+                        <h2>Current Status</h2>
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-title">Current Balance</div>
+                                <div id="current-balance" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Monthly Expenses</div>
+                                <div id="monthly-expenses" class="stat-value">N/A</div>
+                            </div>
+                        </div>
+                        <h3>Actual Data</h3>
+                        <div class="stats actual-stats">
+                            <div class="stat-card">
+                                <div class="stat-title">Actual Balance</div>
+                                <div id="actual-balance" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Actual Monthly Expenses</div>
+                                <div id="actual-monthly-expenses" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Actual Months Until Broke</div>
+                                <div id="actual-months-until-broke" class="stat-value">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="scenarios-management">
+                        <h2>Scenarios</h2>
+                        <div class="scenario-tabs">
+                            <div class="scenario-tab active" data-scenario="current">Current State</div>
+                            <div class="scenario-tab" data-scenario="scenario1">Scenario 1</div>
+                            <div class="scenario-tab" data-scenario="scenario2">Scenario 2</div>
+                            <div class="scenario-tab" data-scenario="scenario3">Scenario 3</div>
+                        </div>
+                        
+                        <div class="active-scenario-container">
+                            <div class="scenario-controls">
+                                <h3>Burn Rate Adjustment</h3>
+                                <div class="slider-container">
+                                    <input type="range" id="burn-rate-slider" min="0.5" max="1.5" step="0.05" value="1">
+                                    <span id="burn-rate-value">100%</span>
+                                </div>
+                                
+                                <h3>Add Income</h3>
+                                <div class="income-input">
+                                    <div class="input-group">
+                                        <label for="income-date">Date:</label>
+                                        <input type="date" id="income-date">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="income-amount">Amount:</label>
+                                        <input type="number" id="income-amount" min="0" step="1000">
+                                    </div>
+                                    <button id="add-income-button" class="primary-button">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                
+                                <h3>Incomes for <span id="current-scenario-name">Current State</span></h3>
+                                <div class="income-list-container">
+                                    <ul id="income-list" class="income-list"></ul>
+                                    <button id="clear-incomes-button" class="secondary-button">
+                                        <i class="fas fa-trash"></i> Clear All Incomes
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="scenario-results">
+                                <h3>Results</h3>
+                                <div class="result-card">
+                                    <div class="result-title">Months Until Broke</div>
+                                    <div id="months-until-broke" class="result-value">N/A</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="right-column">
+                    <div class="chart-container expanded">
+                        <h2>Cash Flow Projection</h2>
+                        <div class="chart-controls">
+                            <label>
+                                <input type="checkbox" id="show-actual-data" checked>
+                                Show Actual Data
+                            </label>
+                        </div>
+                        <canvas id="cash-flow-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Cash Flow Projection Tool &copy; 2024</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow Projection Tool - Help Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #2ecc71;
+            --border-radius: 6px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #777;
+            font-size: 1.1rem;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h3 {
+            color: var(--secondary-color);
+            margin: 20px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin: 10px 0 20px 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card h4 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        .feature-card i {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        .note {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+        }
+        
+        .warning {
+            background-color: #fff7f7;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+        }
+        
+        .tip {
+            background-color: #f6fff7;
+            border-left: 4px solid var(--success-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+        }
+        
+        .changelog {
+            margin: 20px 0;
+        }
+        
+        .changelog-entry {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .changelog-date {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        .back-to-app {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: background-color 0.3s ease;
+        }
+        
+        .back-to-app:hover {
+            background-color: #2980b9;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> Cash Flow Projection Tool</h1>
+            <p class="subtitle">User Guide & Documentation</p>
+        </header>
+        
+        <h2><i class="fas fa-book"></i> Introduction</h2>
+        <p>The Cash Flow Projection Tool is a web-based application designed to help you project and visualize your future cash flow based on historical transaction data. Whether you're a business owner, a financial analyst, or just someone who wants to keep track of personal finances, this tool provides you with intuitive features to understand your financial trajectory.</p>
+        
+        <h2><i class="fas fa-puzzle-piece"></i> Key Features</h2>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <i class="fas fa-file-import"></i>
+                <h4>CSV Import</h4>
+                <p>Import transaction data from CSV files, with support for various formats including Greek character encoding.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-project-diagram"></i>
+                <h4>Multiple Scenarios</h4>
+                <p>Create up to four different scenarios to compare different financial strategies.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-sliders-h"></i>
+                <h4>Burn Rate Adjustment</h4>
+                <p>Adjust your projected monthly expenses with a simple slider to see how spending changes affect your future balance.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-money-bill-wave"></i>
+                <h4>Income Planning</h4>
+                <p>Add expected future income to any scenario to see how it impacts your projections.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-calculator"></i>
+                <h4>Actual Expense Tracking</h4>
+                <p>Record and compare your actual monthly expenses with projected expenses.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-chart-line"></i>
+                <h4>Visual Projections</h4>
+                <p>See your financial future visualized with clear, interactive charts.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-save"></i>
+                <h4>Save & Load</h4>
+                <p>Save your work as JSON files for backup or future editing.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-calendar-alt"></i>
+                <h4>Months Until Broke</h4>
+                <p>See at a glance how many months your current funds will last based on different scenarios.</p>
+            </div>
+        </div>
+        
+        <h2><i class="fas fa-user-guide"></i> How to Use</h2>
+        
+        <h3>1. Import Transaction Data</h3>
+        <ol>
+            <li>Click the "Select CSV File" button to import your transaction data.</li>
+            <li>The CSV should be semicolon-separated (;) with columns for date, amount, and balance.</li>
+            <li>Greek characters are supported for bank statements from Greek banks.</li>
+            <li>If your CSV has future dates, you can check "Normalize future years to current year" to make projections more accurate.</li>
+        </ol>
+        
+        <h3>2. Work with Scenarios</h3>
+        <ol>
+            <li>Click on the scenario tabs (Current State, Scenario 1, etc.) to switch between different scenarios.</li>
+            <li>Adjust the burn rate slider to increase or decrease monthly expenses for the selected scenario.</li>
+            <li>Add future income by entering a date and amount, then clicking "Add".</li>
+            <li>You can clear all incomes for a scenario using the "Clear All Incomes" button.</li>
+        </ol>
+        
+        <h3>3. Track Actual Expenses</h3>
+        <ol>
+            <li>Add your actual monthly expenses by selecting a month and year, entering the expense amount, and clicking "Add".</li>
+            <li>View your recorded expenses in the table below the entry form.</li>
+            <li>Remove expenses by clicking the delete button next to any entry.</li>
+            <li>Toggle the "Show Actual Data" checkbox to display actual expenses on the chart.</li>
+        </ol>
+        
+        <h3>4. Save and Load Your Work</h3>
+        <ol>
+            <li>Click "Save Current State" to download a JSON file containing all your data and scenarios.</li>
+            <li>To load a previously saved state, click "Load Saved State" and select your JSON file.</li>
+            <li>This allows you to backup your work, share it with others, or continue working on it later.</li>
+        </ol>
+        
+        <div class="note">
+            <p><strong>Note:</strong> The application works entirely in your browser. No data is sent to any server, ensuring your financial information remains private.</p>
+        </div>
+        
+        <div class="tip">
+            <p><strong>Tip:</strong> For the best experience, start by importing recent transaction data, then create different scenarios to see how various decisions might affect your future cash flow.</p>
+        </div>
+        
+        <h2><i class="fas fa-chart-bar"></i> Understanding the Results</h2>
+        
+        <h3>Current Status Panel</h3>
+        <p>This panel shows:</p>
+        <ul>
+            <li><strong>Current Balance:</strong> Your current account balance from the last transaction.</li>
+            <li><strong>Monthly Expenses:</strong> Average monthly expenses calculated from your historical data.</li>
+        </ul>
+        
+        <h3>Actual Data Panel</h3>
+        <p>This panel shows:</p>
+        <ul>
+            <li><strong>Actual Balance:</strong> Your current balance minus the sum of all actual expenses.</li>
+            <li><strong>Actual Monthly Expenses:</strong> The average of your manually entered actual expenses.</li>
+            <li><strong>Actual Months Until Broke:</strong> How many months your funds will last based on actual expenses.</li>
+        </ul>
+        
+        <h3>Scenario Results</h3>
+        <p>For each scenario, you'll see:</p>
+        <ul>
+            <li><strong>Months Until Broke:</strong> How many months your funds will last based on the selected scenario.</li>
+        </ul>
+        
+        <h3>Cash Flow Chart</h3>
+        <p>The chart displays:</p>
+        <ul>
+            <li>Projected balance over time for each scenario</li>
+            <li>Actual expense data (when "Show Actual Data" is checked)</li>
+            <li>A zero line to easily see when you'll run out of money</li>
+        </ul>
+        
+        <h2><i class="fas fa-history"></i> Changelog</h2>
+        
+        <div class="changelog">
+            <div class="changelog-entry">
+                <div class="changelog-date">Version 1.3 - May 2025</div>
+                <ul>
+                    <li>Added save and load functionality to preserve application state</li>
+                    <li>Added actual balance, actual monthly expenses, and actual months until broke calculations</li>
+                    <li>Added help documentation with user guide</li>
+                    <li>Fixed chart clearing when data is cleared</li>
+                    <li>Various UI improvements and bug fixes</li>
+                </ul>
+            </div>
+            
+            <div class="changelog-entry">
+                <div class="changelog-date">Version 1.2 - April 2025</div>
+                <ul>
+                    <li>Added actual expense data tracking with manual entry</li>
+                    <li>Implemented visualization of actual expenses on chart</li>
+                    <li>Enhanced chart to compare projections with actual performance</li>
+                    <li>Fixed CSV parsing issues with Greek characters</li>
+                    <li>Improved error handling and notifications</li>
+                </ul>
+            </div>
+            
+            <div class="changelog-entry">
+                <div class="changelog-date">Version 1.1 - March 2025</div>
+                <ul>
+                    <li>Added multiple scenario management</li>
+                    <li>Implemented burn rate adjustment slider</li>
+                    <li>Added future income functionality</li>
+                    <li>Enhanced chart visualization</li>
+                    <li>Fixed date handling issues</li>
+                </ul>
+            </div>
+            
+            <div class="changelog-entry">
+                <div class="changelog-date">Version 1.0 - March 2025</div>
+                <ul>
+                    <li>Initial release with basic cash flow projection functionality</li>
+                    <li>CSV import for transaction data</li>
+                    <li>Basic chart visualization</li>
+                    <li>Monthly expense calculation</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2><i class="fas fa-exclamation-triangle"></i> Troubleshooting</h2>
+        
+        <h3>CSV Import Issues</h3>
+        <p>If you're having trouble importing your CSV file:</p>
+        <ul>
+            <li>Make sure the file uses semicolon (;) as a separator rather than commas</li>
+            <li>Check that your file has columns for date, amount, and balance</li>
+            <li>Dates should be in DD/MM/YYYY, DD-MM-YYYY, or DD.MM.YYYY format</li>
+            <li>Download the sample CSV file to see the expected format</li>
+        </ul>
+        
+        <h3>Chart Not Displaying Correctly</h3>
+        <p>If the chart doesn't display correctly:</p>
+        <ul>
+            <li>Make sure you've loaded transaction data first</li>
+            <li>Check that you haven't accidentally set the burn rate too high or too low</li>
+            <li>For actual data comparison, ensure the "Show Actual Data" checkbox is checked</li>
+        </ul>
+        
+        <div class="warning">
+            <p><strong>Warning:</strong> The tool provides projections based on historical data and user inputs. Actual financial outcomes may vary. Always consult with a financial professional for important financial decisions.</p>
+        </div>
+        
+        <a href="index.html" class="back-to-app"><i class="fas fa-arrow-left"></i> Back to Application</a>
+        
+        <footer>
+            <p>Cash Flow Projection Tool &copy; 2025</p>
+        </footer>
+    </div>
+</body>
+</html> 
