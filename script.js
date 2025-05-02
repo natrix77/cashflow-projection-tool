@@ -1,4 +1,6 @@
 // Cash Flow Projection Tool - JavaScript
+// Version 1.3.1 - Fixed income functionality with enhanced logging
+// Last updated: July 2025
 
 // Helper function to decode Greek characters
 function decodeGreekCharacters(str) {
