@@ -1577,6 +1577,12 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
         
         // Apply additional incomes
         console.log(`Processing ${analyzer.scenarios[scenarioId].incomes.length} incomes for scenario '${scenarioId}'`, analyzer.scenarios[scenarioId].incomes);
+
+        // Debug: Create a copy of the incomes to track which ones get applied
+        const incomesToApply = [...analyzer.scenarios[scenarioId].incomes];
+        const appliedIncomes = [];
+        const skippedIncomes = [];
+
         analyzer.scenarios[scenarioId].incomes.forEach((income, idx) => {
             try {
                 console.log(`Processing income #${idx}:`, income);
@@ -1586,6 +1592,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                 // Validate income entry
                 if (!incomeDate || !(incomeDate instanceof Date) || isNaN(incomeDate.getTime()) || !incomeAmount) {
                     console.warn("Invalid income entry", income);
+                    skippedIncomes.push({income, reason: "Invalid date or amount"});
                     return; // Skip this income
                 }
                 
@@ -1609,10 +1616,12 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                     }
                     
                     incomeApplied = true;
+                    appliedIncomes.push({income, appliedToMonth: 0});
                 }
                 // If income date is after the last projection date, skip
                 else if (incomeDate > lastProjectionDate) {
                     console.warn(`Income date (${incomeDate.toISOString()}) is after projection end, income not applied`);
+                    skippedIncomes.push({income, reason: "Date after projection end"});
                     return;
                 }
                 // Otherwise find the closest month
@@ -1631,6 +1640,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                             }
                             
                             incomeApplied = true;
+                            appliedIncomes.push({income, appliedToMonth: i});
                             break;
                         }
                     }
@@ -1663,6 +1673,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                             }
                             
                             incomeApplied = true;
+                            appliedIncomes.push({income, appliedToMonth: closestIndex});
                         }
                     }
                 }
@@ -1670,11 +1681,19 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                 if (!incomeApplied) {
                     console.warn(`Could not find suitable month for income: ${incomeDate.toISOString()}. Available months:`, 
                                  projection.map(p => `${p.date.getMonth()+1}/${p.date.getFullYear()}`));
+                    skippedIncomes.push({income, reason: "No suitable month found"});
                 }
             } catch (err) {
                 console.error("Error processing income:", err, income);
+                skippedIncomes.push({income, reason: "Error: " + err.message});
             }
         });
+
+        // Log summary of applied and skipped incomes
+        console.log(`Applied ${appliedIncomes.length} of ${analyzer.scenarios[scenarioId].incomes.length} incomes:`, appliedIncomes);
+        if (skippedIncomes.length > 0) {
+            console.warn(`Skipped ${skippedIncomes.length} incomes:`, skippedIncomes);
+        }
         
         // Store projection in scenario
         analyzer.scenarios[scenarioId].data = projection;
