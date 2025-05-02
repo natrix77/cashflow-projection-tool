@@ -344,6 +344,10 @@ header h1 i {
 /* Income List */
 .income-list-container {
     margin-bottom: 20px;
+    display: block !important; /* Force display */
+    visibility: visible !important; /* Force visibility */
+    opacity: 1 !important; /* Force opacity */
+    min-height: 100px; /* Ensure minimum height */
 }
 
 .income-list {
@@ -354,6 +358,8 @@ header h1 i {
     border: 1px solid #eee;
     border-radius: var(--border-radius);
     padding: 10px;
+    min-height: 50px; /* Ensure minimum height */
+    display: block !important; /* Force display */
 }
 
 .income-list li {

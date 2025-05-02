@@ -1174,7 +1174,57 @@ function addIncome() {
         console.log("Re-projecting cash flow...");
         projectCashFlow();
         console.log("Updating income list...");
+        
+        // Ensure income list container is visible
+        const incomeListContainer = document.querySelector('.income-list-container');
+        if (incomeListContainer) {
+            incomeListContainer.style.display = 'block';
+            incomeListContainer.style.visibility = 'visible';
+            incomeListContainer.style.opacity = '1';
+        }
+        
+        // Update the income list
         updateIncomeList();
+        
+        // Make sure at least one income item is visible in the list
+        const incomeList = document.getElementById('income-list');
+        if (incomeList && incomeList.children.length === 0) {
+            console.error("Income list is empty after update - forcing display of added income");
+            const li = document.createElement('li');
+            
+            // Format date as DD/MM/YYYY
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+            
+            // Create content
+            const dateSpan = document.createElement('span');
+            dateSpan.textContent = formattedDate;
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.textContent = analyzer.formatCurrency(amount);
+            amountSpan.style.color = 'var(--success-color)';
+            amountSpan.style.fontWeight = 'bold';
+            
+            const removeButton = document.createElement('i');
+            removeButton.classList.add('fas', 'fa-times', 'remove-income');
+            removeButton.addEventListener('click', () => {
+                // Find the index by date and amount
+                const incomes = analyzer.scenarios[analyzer.activeScenario].incomes;
+                const index = incomes.findIndex(income => 
+                    income.date.getTime() === date.getTime() && income.amount === amount
+                );
+                if (index !== -1) {
+                    removeIncome(index);
+                }
+            });
+            
+            // Add to list item
+            li.appendChild(dateSpan);
+            li.appendChild(amountSpan);
+            li.appendChild(removeButton);
+            
+            incomeList.appendChild(li);
+        }
+        
         console.log("Updating scenario results...");
         updateScenarioResults();
         console.log("Updating chart...");
@@ -1238,6 +1288,17 @@ function updateIncomeList() {
         if (!incomeList) {
             console.error("Could not find income-list element in DOM");
             return;
+        }
+        
+        // Ensure the incomeList is visible
+        incomeList.style.display = 'block';
+        
+        // Also make sure the container is visible
+        const incomeListContainer = document.querySelector('.income-list-container');
+        if (incomeListContainer) {
+            incomeListContainer.style.display = 'block';
+            incomeListContainer.style.visibility = 'visible';
+            incomeListContainer.style.opacity = '1';
         }
         
         incomeList.innerHTML = '';
