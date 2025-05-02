@@ -1150,13 +1150,24 @@ function addIncome() {
             return;
         }
         
-        // Create a Date object from the input
-        const date = new Date(dateStr);
-        
-        // Validate date
-        if (isNaN(date.getTime())) {
-            console.error("Invalid date object created:", date);
-            alert('Please enter a valid date.');
+        // Ensure proper date parsing
+        let date;
+        try {
+            // Create a Date object from the input (use local timezone)
+            date = new Date(dateStr);
+            
+            // Ensure we're setting the time to noon to avoid timezone issues
+            date.setHours(12, 0, 0, 0);
+            
+            console.log("Parsed date:", date, "ISO:", date.toISOString());
+            
+            // Sanity check - ensure the date is valid
+            if (isNaN(date.getTime())) {
+                throw new Error("Invalid date created");
+            }
+        } catch (error) {
+            console.error("Date parsing error:", error);
+            alert('Please enter a valid date in the format YYYY-MM-DD.');
             return;
         }
         
@@ -1578,29 +1589,86 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                     return; // Skip this income
                 }
                 
+                // Check if the income date is within the projection period
+                const firstProjectionDate = projection[0].date;
+                const lastProjectionDate = projection[projection.length - 1].date;
+                
                 console.log(`Valid income: ${incomeAmount} on ${incomeDate.toISOString()}`);
+                console.log(`Projection period: ${firstProjectionDate.toISOString()} to ${lastProjectionDate.toISOString()}`);
+                
                 let incomeApplied = false;
                 
-                // Find the month that matches the income date
-                for (let i = 0; i < projection.length; i++) {
-                    if (projection[i].date.getFullYear() === incomeDate.getFullYear() && 
-                        projection[i].date.getMonth() === incomeDate.getMonth()) {
+                // If income date is before the first projection date, apply to first month
+                if (incomeDate < firstProjectionDate) {
+                    console.log(`Income date (${incomeDate.toISOString()}) is before projection start, applying to first month`);
+                    projection[0].income += incomeAmount;
+                    
+                    // Update balance for all months
+                    for (let j = 0; j < projection.length; j++) {
+                        projection[j].balance += incomeAmount;
+                    }
+                    
+                    incomeApplied = true;
+                }
+                // If income date is after the last projection date, skip
+                else if (incomeDate > lastProjectionDate) {
+                    console.warn(`Income date (${incomeDate.toISOString()}) is after projection end, income not applied`);
+                    return;
+                }
+                // Otherwise find the closest month
+                else {
+                    // First try to find an exact month match
+                    for (let i = 0; i < projection.length; i++) {
+                        if (projection[i].date.getFullYear() === incomeDate.getFullYear() && 
+                            projection[i].date.getMonth() === incomeDate.getMonth()) {
+                            
+                            console.log(`Exact month match: Applying income to month ${i} (${projection[i].date.toISOString()})`);
+                            projection[i].income += incomeAmount;
+                            
+                            // Update balance for this month and all future months
+                            for (let j = i; j < projection.length; j++) {
+                                projection[j].balance += incomeAmount;
+                            }
+                            
+                            incomeApplied = true;
+                            break;
+                        }
+                    }
+                    
+                    // If no exact match found, find the closest month that is after the income date
+                    if (!incomeApplied) {
+                        let closestIndex = -1;
+                        let minDiff = Number.MAX_VALUE;
                         
-                        console.log(`Applying income to month ${i} (${projection[i].date.toISOString()})`);
-                        projection[i].income += incomeAmount;
-                        
-                        // Update balance for this month and all future months
-                        for (let j = i; j < projection.length; j++) {
-                            projection[j].balance += incomeAmount;
+                        for (let i = 0; i < projection.length; i++) {
+                            const projDate = projection[i].date;
+                            
+                            // Only consider dates after the income date
+                            if (projDate >= incomeDate) {
+                                const diff = Math.abs(projDate.getTime() - incomeDate.getTime());
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    closestIndex = i;
+                                }
+                            }
                         }
                         
-                        incomeApplied = true;
-                        break;
+                        if (closestIndex >= 0) {
+                            console.log(`Found closest month: Applying income to month ${closestIndex} (${projection[closestIndex].date.toISOString()})`);
+                            projection[closestIndex].income += incomeAmount;
+                            
+                            // Update balance for this month and all future months
+                            for (let j = closestIndex; j < projection.length; j++) {
+                                projection[j].balance += incomeAmount;
+                            }
+                            
+                            incomeApplied = true;
+                        }
                     }
                 }
                 
                 if (!incomeApplied) {
-                    console.warn(`Could not find matching month for income: ${incomeDate.toISOString()}. Available months:`, 
+                    console.warn(`Could not find suitable month for income: ${incomeDate.toISOString()}. Available months:`, 
                                  projection.map(p => `${p.date.getMonth()+1}/${p.date.getFullYear()}`));
                 }
             } catch (err) {
