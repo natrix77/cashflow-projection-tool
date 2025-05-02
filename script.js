@@ -1159,12 +1159,20 @@ function addIncome() {
             // Ensure we're setting the time to noon to avoid timezone issues
             date.setHours(12, 0, 0, 0);
             
-            console.log("Parsed date:", date, "ISO:", date.toISOString());
+            console.log("Parsed date:", date, "ISO:", date.toISOString(), "Local string:", date.toLocaleString());
             
             // Sanity check - ensure the date is valid
             if (isNaN(date.getTime())) {
                 throw new Error("Invalid date created");
             }
+            
+            // Additional check - convert to ISO string and back to ensure consistent timezone handling
+            const isoString = date.toISOString();
+            console.log("Re-parsing from ISO string to ensure consistency");
+            date = new Date(isoString);
+            date.setHours(12, 0, 0, 0); // Re-set hours to noon in case timezone conversion shifted it
+            
+            console.log("Final income date after normalization:", date, "ISO:", date.toISOString());
         } catch (error) {
             console.error("Date parsing error:", error);
             alert('Please enter a valid date in the format YYYY-MM-DD.');
@@ -1583,11 +1591,19 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
         const appliedIncomes = [];
         const skippedIncomes = [];
 
+        // Debug: Log the projection months first for reference
+        console.log("Projection months available:", projection.map((p, i) => {
+            return `Month ${i}: ${p.date.getFullYear()}-${p.date.getMonth()+1}-${p.date.getDate()}`;
+        }));
+
         analyzer.scenarios[scenarioId].incomes.forEach((income, idx) => {
             try {
                 console.log(`Processing income #${idx}:`, income);
                 const incomeDate = new Date(income.date);
                 const incomeAmount = income.amount;
+                
+                // Additional date debugging
+                console.log(`Income date details: Year=${incomeDate.getFullYear()}, Month=${incomeDate.getMonth()}, Day=${incomeDate.getDate()}, ISO=${incomeDate.toISOString()}`);
                 
                 // Validate income entry
                 if (!incomeDate || !(incomeDate instanceof Date) || isNaN(incomeDate.getTime()) || !incomeAmount) {
@@ -1626,8 +1642,14 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                 }
                 // Otherwise find the closest month
                 else {
+                    console.log("Looking for matching month for income date:", incomeDate);
+                    
                     // First try to find an exact month match
+                    let exactMatchFound = false;
                     for (let i = 0; i < projection.length; i++) {
+                        // Log the comparison for debugging
+                        console.log(`Checking month ${i}: Projection date=${projection[i].date.getFullYear()}-${projection[i].date.getMonth()+1}, Income date=${incomeDate.getFullYear()}-${incomeDate.getMonth()+1}`);
+                        
                         if (projection[i].date.getFullYear() === incomeDate.getFullYear() && 
                             projection[i].date.getMonth() === incomeDate.getMonth()) {
                             
@@ -1640,9 +1662,15 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                             }
                             
                             incomeApplied = true;
+                            exactMatchFound = true;
                             appliedIncomes.push({income, appliedToMonth: i});
                             break;
                         }
+                    }
+                    
+                    // Log if no exact match was found
+                    if (!exactMatchFound) {
+                        console.log("No exact month match found, searching for closest month after income date");
                     }
                     
                     // If no exact match found, find the closest month that is after the income date
@@ -1656,6 +1684,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                             // Only consider dates after the income date
                             if (projDate >= incomeDate) {
                                 const diff = Math.abs(projDate.getTime() - incomeDate.getTime());
+                                console.log(`Checking distance to month ${i}: diff=${diff}, minDiff=${minDiff}`);
                                 if (diff < minDiff) {
                                     minDiff = diff;
                                     closestIndex = i;
@@ -1694,6 +1723,11 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
         if (skippedIncomes.length > 0) {
             console.warn(`Skipped ${skippedIncomes.length} incomes:`, skippedIncomes);
         }
+        
+        // Verify the projection balances were updated correctly
+        console.log("Final projection balances:", projection.map((p, i) => {
+            return `Month ${i}: ${p.balance} (income: ${p.income || 0})`;
+        }));
         
         // Store projection in scenario
         analyzer.scenarios[scenarioId].data = projection;
@@ -1804,6 +1838,35 @@ function updateChart() {
         Object.keys(analyzer.scenarios).forEach(scenarioId => {
             if (!analyzer.scenarios[scenarioId].data) return;
             
+            // Debug: log incomes and data for this scenario
+            console.log(`Chart data for scenario '${scenarioId}':`);
+            console.log(`- Incomes:`, analyzer.scenarios[scenarioId].incomes);
+            
+            // Verify projection data has income values
+            const hasIncomes = analyzer.scenarios[scenarioId].incomes.length > 0;
+            if (hasIncomes) {
+                console.log(`- Checking if ${analyzer.scenarios[scenarioId].incomes.length} incomes are reflected in projection data:`);
+                
+                // Find months with income
+                const monthsWithIncome = analyzer.scenarios[scenarioId].data
+                    .filter(d => d.income && d.income > 0)
+                    .map((d, i) => {
+                        return {
+                            month: `${d.date.getFullYear()}-${d.date.getMonth()+1}`, 
+                            income: d.income,
+                            balance: d.balance
+                        };
+                    });
+                
+                console.log(`- Found ${monthsWithIncome.length} months with income in projection:`, monthsWithIncome);
+                
+                // If no months have income but incomes exist, force a re-projection
+                if (monthsWithIncome.length === 0 && hasIncomes) {
+                    console.warn("No months with income found in projection data despite having incomes - re-projecting");
+                    projectCashFlowForScenario(scenarioId);
+                }
+            }
+            
             // Clean and validate the data
             const cleanData = analyzer.scenarios[scenarioId].data
                 .filter(d => d && validateDate(d.date))
@@ -1819,6 +1882,9 @@ function updateChart() {
                 console.warn(`No valid data for scenario ${scenarioId}`);
                 return;
             }
+            
+            console.log(`- Final chart data points: ${cleanData.length}`, 
+                cleanData.map(d => `${new Date(d.x).toISOString().substr(0, 10)}: ${d.y.toFixed(2)}`).slice(0, 5));
             
             datasets.push({
                 label: analyzer.scenarios[scenarioId].name,
