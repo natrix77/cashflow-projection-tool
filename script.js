@@ -678,14 +678,38 @@ let analyzer = new CashFlowAnalyzer();
 let chart = null;
 
 function initApp() {
+    console.log("Initializing application...");
+    
+    // Initialize analyzer if not already done
+    if (!analyzer) {
+        console.log("Creating new CashFlowAnalyzer instance");
+        analyzer = new CashFlowAnalyzer();
+    }
+    
+    // Verify analyzer initialized correctly
+    console.log("Analyzer initialized with state:", {
+        hasTransactions: analyzer.transactions ? true : false,
+        balance: analyzer.balance,
+        scenariosCount: Object.keys(analyzer.scenarios).length,
+        activeScenario: analyzer.activeScenario
+    });
+    
     // Set up event listeners
     setupEventListeners();
     
     // Set today's date in the income date field
-    document.getElementById('income-date').valueAsDate = new Date();
+    const incomeDateField = document.getElementById('income-date');
+    if (incomeDateField) {
+        incomeDateField.valueAsDate = new Date();
+        console.log("Set today's date in income date field");
+    } else {
+        console.error("Could not find income-date field in the DOM");
+    }
     
     // Populate year selector
     populateYearSelector();
+    
+    console.log("Application initialization complete");
 }
 
 // Populate year selector with relevant years
@@ -1096,31 +1120,70 @@ function changeActiveScenario(scenarioId) {
 
 // Add income to the active scenario
 function addIncome() {
-    const dateStr = document.getElementById('income-date').value;
-    const amount = parseFloat(document.getElementById('income-amount').value);
-    
-    if (!dateStr || isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid date and positive amount.');
-        return;
+    try {
+        console.log("addIncome function called");
+        
+        // Check if the analyzer object and its properties exist
+        if (!analyzer || !analyzer.scenarios || !analyzer.activeScenario) {
+            console.error("Analyzer object not properly initialized:", analyzer);
+            alert('No data loaded. Please import transaction data first.');
+            return;
+        }
+        
+        // Check if the active scenario exists
+        if (!analyzer.scenarios[analyzer.activeScenario]) {
+            console.error("Active scenario doesn't exist:", analyzer.activeScenario);
+            alert('Invalid scenario selected. Please try a different scenario.');
+            return;
+        }
+        
+        const dateStr = document.getElementById('income-date').value;
+        const amount = parseFloat(document.getElementById('income-amount').value);
+        
+        console.log("Income inputs:", { dateStr, amount });
+        
+        if (!dateStr || isNaN(amount) || amount <= 0) {
+            console.warn("Invalid income data:", { dateStr, amount });
+            alert('Please enter a valid date and positive amount.');
+            return;
+        }
+        
+        // Create a Date object from the input
+        const date = new Date(dateStr);
+        
+        // Validate date
+        if (isNaN(date.getTime())) {
+            console.error("Invalid date object created:", date);
+            alert('Please enter a valid date.');
+            return;
+        }
+        
+        // Add income to scenario
+        console.log("Adding income to scenario:", { date, amount, scenario: analyzer.activeScenario });
+        analyzer.scenarios[analyzer.activeScenario].incomes.push({
+            date: date,
+            amount: amount
+        });
+        
+        // Clear input fields
+        document.getElementById('income-amount').value = '';
+        
+        // Re-project and update
+        console.log("Re-projecting cash flow...");
+        projectCashFlow();
+        console.log("Updating income list...");
+        updateIncomeList();
+        console.log("Updating scenario results...");
+        updateScenarioResults();
+        console.log("Updating chart...");
+        updateChart();
+        
+        console.log("Income added successfully", analyzer.scenarios[analyzer.activeScenario].incomes);
+        showNotification('Income added successfully.', 'success');
+    } catch (error) {
+        console.error("Error in addIncome function:", error);
+        alert('An error occurred while adding income: ' + error.message);
     }
-    
-    // Create a Date object from the input
-    const date = new Date(dateStr);
-    
-    // Add income to scenario
-    analyzer.scenarios[analyzer.activeScenario].incomes.push({
-        date: date,
-        amount: amount
-    });
-    
-    // Clear input fields
-    document.getElementById('income-amount').value = '';
-    
-    // Re-project and update
-    projectCashFlow();
-    updateIncomeList();
-    updateScenarioResults();
-    updateChart();
 }
 
 // Clear all incomes for the active scenario
@@ -1166,50 +1229,75 @@ function updateBurnRate(event) {
 
 // Update income list display
 function updateIncomeList() {
-    const incomeList = document.getElementById('income-list');
-    incomeList.innerHTML = '';
-    
-    const incomes = analyzer.scenarios[analyzer.activeScenario].incomes;
-    
-    if (incomes.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'No incomes added';
-        li.style.color = '#777';
-        li.style.fontStyle = 'italic';
-        incomeList.appendChild(li);
-        return;
+    try {
+        console.log("updateIncomeList function called");
+        const incomeList = document.getElementById('income-list');
+        
+        if (!incomeList) {
+            console.error("Could not find income-list element in DOM");
+            return;
+        }
+        
+        incomeList.innerHTML = '';
+        
+        if (!analyzer || !analyzer.scenarios || !analyzer.activeScenario) {
+            console.error("Analyzer object not properly initialized in updateIncomeList");
+            return;
+        }
+        
+        const incomes = analyzer.scenarios[analyzer.activeScenario].incomes;
+        
+        if (!incomes || !Array.isArray(incomes)) {
+            console.error("Incomes array not found or invalid:", incomes);
+            return;
+        }
+        
+        console.log("Current incomes in scenario:", incomes);
+        
+        if (incomes.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'No incomes added';
+            li.style.color = '#777';
+            li.style.fontStyle = 'italic';
+            incomeList.appendChild(li);
+            return;
+        }
+        
+        // Sort incomes by date
+        const sortedIncomes = [...incomes].sort((a, b) => a.date - b.date);
+        
+        sortedIncomes.forEach((income, index) => {
+            const li = document.createElement('li');
+            
+            // Format date as DD/MM/YYYY
+            const date = new Date(income.date);
+            const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+            
+            // Create content
+            const dateSpan = document.createElement('span');
+            dateSpan.textContent = formattedDate;
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.textContent = analyzer.formatCurrency(income.amount);
+            amountSpan.style.color = 'var(--success-color)';
+            amountSpan.style.fontWeight = 'bold';
+            
+            const removeButton = document.createElement('i');
+            removeButton.classList.add('fas', 'fa-times', 'remove-income');
+            removeButton.addEventListener('click', () => removeIncome(index));
+            
+            // Add to list item
+            li.appendChild(dateSpan);
+            li.appendChild(amountSpan);
+            li.appendChild(removeButton);
+            
+            incomeList.appendChild(li);
+        });
+        
+        console.log("Income list updated successfully");
+    } catch (error) {
+        console.error("Error in updateIncomeList function:", error);
     }
-    
-    // Sort incomes by date
-    const sortedIncomes = [...incomes].sort((a, b) => a.date - b.date);
-    
-    sortedIncomes.forEach((income, index) => {
-        const li = document.createElement('li');
-        
-        // Format date as DD/MM/YYYY
-        const date = new Date(income.date);
-        const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-        
-        // Create content
-        const dateSpan = document.createElement('span');
-        dateSpan.textContent = formattedDate;
-        
-        const amountSpan = document.createElement('span');
-        amountSpan.textContent = analyzer.formatCurrency(income.amount);
-        amountSpan.style.color = 'var(--success-color)';
-        amountSpan.style.fontWeight = 'bold';
-        
-        const removeButton = document.createElement('i');
-        removeButton.classList.add('fas', 'fa-times', 'remove-income');
-        removeButton.addEventListener('click', () => removeIncome(index));
-        
-        // Add to list item
-        li.appendChild(dateSpan);
-        li.appendChild(amountSpan);
-        li.appendChild(removeButton);
-        
-        incomeList.appendChild(li);
-    });
 }
 
 // ====================================
@@ -1414,8 +1502,10 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
         }
         
         // Apply additional incomes
-        analyzer.scenarios[scenarioId].incomes.forEach(income => {
+        console.log(`Processing ${analyzer.scenarios[scenarioId].incomes.length} incomes for scenario '${scenarioId}'`, analyzer.scenarios[scenarioId].incomes);
+        analyzer.scenarios[scenarioId].incomes.forEach((income, idx) => {
             try {
+                console.log(`Processing income #${idx}:`, income);
                 const incomeDate = new Date(income.date);
                 const incomeAmount = income.amount;
                 
@@ -1425,11 +1515,15 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                     return; // Skip this income
                 }
                 
+                console.log(`Valid income: ${incomeAmount} on ${incomeDate.toISOString()}`);
+                let incomeApplied = false;
+                
                 // Find the month that matches the income date
                 for (let i = 0; i < projection.length; i++) {
                     if (projection[i].date.getFullYear() === incomeDate.getFullYear() && 
                         projection[i].date.getMonth() === incomeDate.getMonth()) {
                         
+                        console.log(`Applying income to month ${i} (${projection[i].date.toISOString()})`);
                         projection[i].income += incomeAmount;
                         
                         // Update balance for this month and all future months
@@ -1437,8 +1531,14 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                             projection[j].balance += incomeAmount;
                         }
                         
+                        incomeApplied = true;
                         break;
                     }
+                }
+                
+                if (!incomeApplied) {
+                    console.warn(`Could not find matching month for income: ${incomeDate.toISOString()}. Available months:`, 
+                                 projection.map(p => `${p.date.getMonth()+1}/${p.date.getFullYear()}`));
                 }
             } catch (err) {
                 console.error("Error processing income:", err, income);
