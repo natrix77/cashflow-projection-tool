@@ -950,6 +950,13 @@ let chart = null;
 function initApp() {
     console.log("Initializing application...");
     
+    // Wait for DOM to be fully ready
+    if (document.readyState !== 'complete') {
+        console.log("DOM not fully ready, waiting...");
+        setTimeout(initApp, 100);
+        return;
+    }
+    
     // Initialize analyzer if not already done
     if (!analyzer) {
         console.log("Creating new CashFlowAnalyzer instance");
@@ -964,6 +971,18 @@ function initApp() {
         activeScenario: analyzer.activeScenario
     });
     
+    // Check for essential DOM elements
+    const essentialElements = [
+        'current-balance', 'monthly-expenses', 'monthly-income', 'net-monthly',
+        'historical-expenses', 'historical-income', 'expense-growth', 'income-growth',
+        'historical-progress', 'expenses-progress', 'incomes-progress'
+    ];
+    
+    const missingElements = essentialElements.filter(id => !document.getElementById(id));
+    if (missingElements.length > 0) {
+        console.warn("Missing DOM elements:", missingElements);
+    }
+    
     // Set up event listeners
     setupEventListeners();
     
@@ -973,11 +992,19 @@ function initApp() {
         incomeDateField.valueAsDate = new Date();
         console.log("Set today's date in income date field");
     } else {
-        console.error("Could not find income-date field in the DOM");
+        console.warn("Could not find income-date field in the DOM");
     }
     
     // Populate year selector
     populateYearSelector();
+    
+    // Initialize UI with safe defaults
+    try {
+        console.log("Initializing UI...");
+        updateUI();
+    } catch (error) {
+        console.error("Error during initial UI update:", error);
+    }
     
     console.log("Application initialization complete");
 }
@@ -1523,6 +1550,8 @@ function updateStatistics() {
         } else {
             netMonthlyElement.className = 'stat-value';
         }
+    } else {
+        console.warn("net-monthly element not found in DOM");
     }
 
     // Update data source indicator
