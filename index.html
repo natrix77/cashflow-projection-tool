@@ -116,6 +116,66 @@
                 </div>
             </div>
 
+            <div class="actual-income-import-section">
+                <h2>Actual Monthly Incomes</h2>
+                <div class="monthly-data-container">
+                    <h3>Monthly Income Data</h3>
+                    <div class="monthly-data-form">
+                        <div class="input-group">
+                            <label for="income-month-selector">Month:</label>
+                            <select id="income-month-selector">
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="income-year-selector">Year:</label>
+                            <select id="income-year-selector">
+                                <!-- Will be populated with JavaScript -->
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="actual-income">Actual Income:</label>
+                            <input type="number" id="actual-income" min="0" step="100">
+                        </div>
+                        <button id="add-actual-income-button" class="primary-button">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+                <div class="actual-income-list-container">
+                    <h3>Recorded Actual Incomes</h3>
+                    <div class="table-wrapper">
+                        <table id="actual-incomes-table">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Year</th>
+                                    <th>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Actual income data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="file-format-info">
+                    <p><i class="fas fa-info-circle"></i> Add actual monthly incomes for more accurate cash flow projections.</p>
+                </div>
+            </div>
+
             <div class="two-column-layout">
                 <div class="left-column">
                     <div class="projection-results">
@@ -128,6 +188,10 @@
                             <div class="stat-card">
                                 <div class="stat-title">Monthly Expenses</div>
                                 <div id="monthly-expenses" class="stat-value">N/A</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Monthly Income</div>
+                                <div id="monthly-income" class="stat-value">N/A</div>
                             </div>
                         </div>
                         <div class="data-source-info">

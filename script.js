@@ -51,6 +51,14 @@ class CashFlowAnalyzer {
         this.baselineData = null;
         this.normalizeYears = false;
         this.actualExpenses = []; // Array to store actual expense data
+        this.actualIncomes = []; // Array to store actual income data
+        this.historicalTrends = null; // Store trend analysis from CSV data
+        this.seasonalPatterns = null; // Store seasonal patterns
+        this.confidence = { // Confidence levels for different time horizons
+            nearTerm: 0.9,    // Next 3 months
+            mediumTerm: 0.7,  // 3-12 months  
+            longTerm: 0.5     // 12+ months
+        };
         this.scenarios = {
             current: {
                 name: 'Current State',
@@ -284,6 +292,10 @@ class CashFlowAnalyzer {
                         console.log("Found latest transactions:", latestTransactions);
                         console.log("Using minimum balance from latest date:", this.balance);
 
+                        // Automatically analyze historical trends
+                        console.log("Automatically analyzing historical trends...");
+                        this.analyzeHistoricalTrends();
+
                         resolve({
                             success: true,
                             message: `Data loaded successfully. Current balance: ${this.formatCurrency(this.balance)}`
@@ -505,6 +517,9 @@ class CashFlowAnalyzer {
         this.projectedData = null;
         this.baselineData = null;
         this.actualExpenses = [];
+        this.actualIncomes = [];
+        this.historicalTrends = null;
+        this.seasonalPatterns = null;
         
         // Reset scenarios to initial state but keep structure
         Object.keys(this.scenarios).forEach(key => {
@@ -558,6 +573,247 @@ class CashFlowAnalyzer {
         return actualBalance / actualMonthlyExpenses;
     }
 
+    // ====================================
+    // Actual Income Management Methods
+    // ====================================
+
+    // Add actual income data
+    addActualIncome(month, year, amount) {
+        // Validate inputs
+        if (isNaN(month) || month < 0 || month > 11) {
+            return { success: false, message: "Invalid month" };
+        }
+        
+        if (isNaN(year) || year < 2000 || year > 2100) {
+            return { success: false, message: "Invalid year" };
+        }
+        
+        if (isNaN(amount) || amount < 0) {
+            return { success: false, message: "Invalid amount" };
+        }
+        
+        // Check if entry already exists
+        const existingIndex = this.actualIncomes.findIndex(
+            income => income.month === parseInt(month) && income.year === parseInt(year)
+        );
+        
+        if (existingIndex !== -1) {
+            // Update existing entry
+            this.actualIncomes[existingIndex].amount = parseFloat(amount);
+            return { success: true, message: "Income updated" };
+        } else {
+            // Add new entry
+            this.actualIncomes.push({
+                month: parseInt(month),
+                year: parseInt(year),
+                amount: parseFloat(amount)
+            });
+            
+            // Sort by date
+            this.actualIncomes.sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.month - b.month;
+            });
+            
+            return { success: true, message: "Income added" };
+        }
+    }
+    
+    // Remove actual income
+    removeActualIncome(month, year) {
+        const index = this.actualIncomes.findIndex(
+            income => income.month === parseInt(month) && income.year === parseInt(year)
+        );
+        
+        if (index !== -1) {
+            this.actualIncomes.splice(index, 1);
+            return { success: true, message: "Income removed" };
+        }
+        
+        return { success: false, message: "Income not found" };
+    }
+
+    // Calculate total actual income for current year
+    calculateActualIncome() {
+        if (this.actualIncomes.length === 0) {
+            return 0;
+        }
+        
+        const currentYear = new Date().getFullYear();
+        return this.actualIncomes
+            .filter(income => income.year === currentYear)
+            .reduce((sum, income) => sum + income.amount, 0);
+    }
+
+    // Calculate average monthly actual income
+    calculateActualMonthlyIncome() {
+        if (this.actualIncomes.length === 0) {
+            return 0;
+        }
+        
+        // Sum all actual incomes
+        const totalActualIncome = this.actualIncomes.reduce((sum, income) => sum + income.amount, 0);
+        
+        // Calculate average
+        return totalActualIncome / this.actualIncomes.length;
+    }
+
+    // ====================================
+    // Historical Trend Analysis Methods
+    // ====================================
+
+    // Analyze historical trends from CSV transaction data
+    analyzeHistoricalTrends() {
+        if (!this.transactions || this.transactions.length === 0) {
+            console.log("No transaction data available for trend analysis");
+            return null;
+        }
+
+        try {
+            console.log("Analyzing historical trends from transaction data...");
+            
+            // Group transactions by month
+            const monthlyData = {};
+            
+            this.transactions.forEach(transaction => {
+                const date = new Date(transaction.transactionDate);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = {
+                        year: date.getFullYear(),
+                        month: date.getMonth(),
+                        expenses: 0,
+                        incomes: 0,
+                        transactions: 0,
+                        endBalance: 0
+                    };
+                }
+                
+                if (transaction.amount < 0) {
+                    monthlyData[monthKey].expenses += Math.abs(transaction.amount);
+                } else {
+                    monthlyData[monthKey].incomes += transaction.amount;
+                }
+                
+                monthlyData[monthKey].transactions++;
+                monthlyData[monthKey].endBalance = transaction.balance; // Last balance for that month
+            });
+
+            // Convert to array and sort by date
+            const monthlyTrends = Object.values(monthlyData).sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.month - b.month;
+            });
+
+            console.log(`Analyzed ${monthlyTrends.length} months of historical data`);
+
+            // Calculate trends
+            const trends = {
+                monthlyData: monthlyTrends,
+                averageExpenses: monthlyTrends.reduce((sum, m) => sum + m.expenses, 0) / monthlyTrends.length,
+                averageIncomes: monthlyTrends.reduce((sum, m) => sum + m.incomes, 0) / monthlyTrends.length,
+                expenseGrowthRate: this.calculateGrowthRate(monthlyTrends.map(m => m.expenses)),
+                incomeGrowthRate: this.calculateGrowthRate(monthlyTrends.map(m => m.incomes)),
+                volatility: this.calculateVolatility(monthlyTrends.map(m => m.expenses - m.incomes))
+            };
+
+            this.historicalTrends = trends;
+            this.detectSeasonalPatterns(monthlyTrends);
+            
+            console.log("Historical trends analyzed:", trends);
+            return trends;
+
+        } catch (error) {
+            console.error("Error analyzing historical trends:", error);
+            return null;
+        }
+    }
+
+    // Calculate growth rate from a series of values
+    calculateGrowthRate(values) {
+        if (values.length < 2) return 0;
+        
+        const firstHalf = values.slice(0, Math.floor(values.length / 2));
+        const secondHalf = values.slice(Math.floor(values.length / 2));
+        
+        const firstAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
+        const secondAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
+        
+        if (firstAvg === 0) return 0;
+        return (secondAvg - firstAvg) / firstAvg;
+    }
+
+    // Calculate volatility (standard deviation)
+    calculateVolatility(values) {
+        if (values.length < 2) return 0;
+        
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        const squaredDiffs = values.map(val => Math.pow(val - mean, 2));
+        const variance = squaredDiffs.reduce((sum, val) => sum + val, 0) / values.length;
+        
+        return Math.sqrt(variance);
+    }
+
+    // Detect seasonal patterns in the data
+    detectSeasonalPatterns(monthlyData) {
+        try {
+            console.log("Detecting seasonal patterns...");
+            
+            // Group by month across all years
+            const seasonalData = {};
+            
+            for (let month = 0; month < 12; month++) {
+                seasonalData[month] = {
+                    month: month,
+                    expenses: [],
+                    incomes: [],
+                    count: 0
+                };
+            }
+            
+            monthlyData.forEach(data => {
+                const month = data.month;
+                seasonalData[month].expenses.push(data.expenses);
+                seasonalData[month].incomes.push(data.incomes);
+                seasonalData[month].count++;
+            });
+            
+            // Calculate seasonal factors
+            const patterns = {};
+            const overallAvgExpenses = this.historicalTrends.averageExpenses;
+            const overallAvgIncomes = this.historicalTrends.averageIncomes;
+            
+            for (let month = 0; month < 12; month++) {
+                const monthData = seasonalData[month];
+                
+                if (monthData.count > 0) {
+                    const avgExpenses = monthData.expenses.reduce((sum, val) => sum + val, 0) / monthData.count;
+                    const avgIncomes = monthData.incomes.reduce((sum, val) => sum + val, 0) / monthData.count;
+                    
+                    patterns[month] = {
+                        expenseFactor: overallAvgExpenses > 0 ? avgExpenses / overallAvgExpenses : 1,
+                        incomeFactor: overallAvgIncomes > 0 ? avgIncomes / overallAvgIncomes : 1,
+                        sampleSize: monthData.count
+                    };
+                } else {
+                    patterns[month] = {
+                        expenseFactor: 1,
+                        incomeFactor: 1,
+                        sampleSize: 0
+                    };
+                }
+            }
+            
+            this.seasonalPatterns = patterns;
+            console.log("Seasonal patterns detected:", patterns);
+            
+        } catch (error) {
+            console.error("Error detecting seasonal patterns:", error);
+            this.seasonalPatterns = null;
+        }
+    }
+
     // Save application state to JSON
     saveToJSON() {
         try {
@@ -565,10 +821,13 @@ class CashFlowAnalyzer {
                 balance: this.balance,
                 transactions: this.transactions,
                 actualExpenses: this.actualExpenses,
+                actualIncomes: this.actualIncomes,
+                historicalTrends: this.historicalTrends,
+                seasonalPatterns: this.seasonalPatterns,
                 scenarios: this.scenarios,
                 activeScenario: this.activeScenario,
                 timestamp: new Date().toISOString(),
-                version: '1.0'
+                version: '2.0'
             };
             
             // Convert to JSON string
@@ -646,8 +905,17 @@ class CashFlowAnalyzer {
                         this.balance = jsonData.balance || 0;
                         this.transactions = jsonData.transactions || [];
                         this.actualExpenses = jsonData.actualExpenses || [];
+                        this.actualIncomes = jsonData.actualIncomes || [];
+                        this.historicalTrends = jsonData.historicalTrends || null;
+                        this.seasonalPatterns = jsonData.seasonalPatterns || null;
                         this.scenarios = jsonData.scenarios || {};
                         this.activeScenario = jsonData.activeScenario || 'current';
+
+                        // If we have transactions but no trends (from old version), analyze them
+                        if (this.transactions && this.transactions.length > 0 && !this.historicalTrends) {
+                            console.log("Analyzing trends for loaded data...");
+                            this.analyzeHistoricalTrends();
+                        }
                         
                         resolve({
                             success: true,
@@ -716,9 +984,23 @@ function initApp() {
 
 // Populate year selector with relevant years
 function populateYearSelector() {
+    // Populate expense year selector
     const yearSelector = document.getElementById('year-selector');
-    yearSelector.innerHTML = '';
+    if (yearSelector) {
+        yearSelector.innerHTML = '';
+        populateYearOptions(yearSelector);
+    }
     
+    // Populate income year selector
+    const incomeYearSelector = document.getElementById('income-year-selector');
+    if (incomeYearSelector) {
+        incomeYearSelector.innerHTML = '';
+        populateYearOptions(incomeYearSelector);
+    }
+}
+
+// Helper function to populate year options for a selector
+function populateYearOptions(selector) {
     const currentYear = new Date().getFullYear();
     
     // Add options for current year and next 3 years
@@ -731,7 +1013,7 @@ function populateYearSelector() {
             option.selected = true;
         }
         
-        yearSelector.appendChild(option);
+        selector.appendChild(option);
     }
 }
 
@@ -809,6 +1091,12 @@ function setupEventListeners() {
         const addActualExpenseButton = document.getElementById('add-actual-expense-button');
         if (addActualExpenseButton) {
             addActualExpenseButton.addEventListener('click', addActualExpense);
+        }
+
+        // Add actual income button
+        const addActualIncomeButton = document.getElementById('add-actual-income-button');
+        if (addActualIncomeButton) {
+            addActualIncomeButton.addEventListener('click', addActualIncome);
         }
         
         // Show actual data checkbox
@@ -942,6 +1230,7 @@ function resetUI() {
     // Reset statistics
     document.getElementById('current-balance').textContent = 'N/A';
     document.getElementById('monthly-expenses').textContent = 'N/A';
+    document.getElementById('monthly-income').textContent = 'N/A';
     document.getElementById('months-until-broke').textContent = 'N/A';
     
     // Reset actual data statistics
@@ -980,6 +1269,15 @@ function resetUI() {
             tbody.innerHTML = '';
         }
     }
+    
+    // Clear actual incomes table
+    const actualIncomesTable = document.getElementById('actual-incomes-table');
+    if (actualIncomesTable) {
+        const tbody = actualIncomesTable.getElementsByTagName('tbody')[0];
+        if (tbody) {
+            tbody.innerHTML = '';
+        }
+    }
 }
 
 // Update the entire UI
@@ -1004,6 +1302,12 @@ function updateUI() {
         if (document.getElementById('actual-expenses-table')) {
             // Update actual expenses table
             updateActualExpensesTable();
+        }
+        
+        // Check if the actual incomes table exists before updating it
+        if (document.getElementById('actual-incomes-table')) {
+            // Update actual incomes table
+            updateActualIncomesTable();
         }
     } catch (error) {
         console.error("Error updating UI:", error);
@@ -1113,11 +1417,36 @@ function updateStatistics() {
         actualMonthsUntilBrokeElement.title = '';
     }
     
+    // Update monthly income
+    const hasActualIncomeData = analyzer.actualIncomes.length > 0;
+    const monthlyIncomeElement = document.getElementById('monthly-income');
+    if (monthlyIncomeElement) {
+        if (hasActualIncomeData) {
+            const monthlyIncome = analyzer.calculateActualMonthlyIncome();
+            monthlyIncomeElement.textContent = analyzer.formatCurrency(monthlyIncome);
+            monthlyIncomeElement.style.color = 'var(--success-color)';
+            monthlyIncomeElement.title = 'Using actual income data';
+        } else if (analyzer.historicalTrends) {
+            // Use historical income data from CSV
+            const historicalIncome = analyzer.historicalTrends.averageIncomes;
+            monthlyIncomeElement.textContent = analyzer.formatCurrency(historicalIncome);
+            monthlyIncomeElement.style.color = '';
+            monthlyIncomeElement.title = 'Using historical CSV income data';
+        } else {
+            monthlyIncomeElement.textContent = 'N/A';
+            monthlyIncomeElement.style.color = '';
+            monthlyIncomeElement.title = 'No income data available';
+        }
+    }
+
     // Update data source indicator
     const dataSourceTextElement = document.getElementById('data-source-text');
     if (dataSourceTextElement) {
-        if (hasActualData) {
-            dataSourceTextElement.textContent = 'Using actual expense data (more accurate)';
+        if (hasActualData || hasActualIncomeData) {
+            let sources = [];
+            if (hasActualData) sources.push('actual expenses');
+            if (hasActualIncomeData) sources.push('actual incomes');
+            dataSourceTextElement.textContent = `Using ${sources.join(' & ')} (more accurate)`;
             dataSourceTextElement.style.color = 'var(--primary-color)';
             dataSourceTextElement.style.fontWeight = 'bold';
         } else {
@@ -2241,6 +2570,131 @@ function removeActualExpense(month, year) {
         
         // Update statistics
         updateStatistics();
+    } else {
+        showNotification(result.message, 'error');
+    }
+}
+
+// ====================================
+// Actual Income Management Functions  
+// ====================================
+
+// Update the actual incomes table
+function updateActualIncomesTable() {
+    const table = document.getElementById('actual-incomes-table');
+    if (!table) {
+        console.error("Could not find actual-incomes-table element");
+        return;
+    }
+    
+    const tbody = table.getElementsByTagName('tbody')[0];
+    if (!tbody) {
+        console.error("Could not find tbody element in actual-incomes-table");
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    // Log current actual incomes
+    console.log("Updating actual incomes table with data:", analyzer.actualIncomes);
+    
+    // If no data
+    if (!analyzer.actualIncomes || analyzer.actualIncomes.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 4;
+        cell.textContent = 'No actual income data recorded';
+        cell.style.textAlign = 'center';
+        cell.style.fontStyle = 'italic';
+        cell.style.color = '#777';
+        return;
+    }
+    
+    // Get month names
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    // Sort by date first
+    const sortedIncomes = [...analyzer.actualIncomes].sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+    });
+    
+    // Add a row for each income
+    sortedIncomes.forEach(income => {
+        try {
+            const row = tbody.insertRow();
+            
+            // Month - ensure it's in valid range
+            const monthIndex = income.month >= 0 && income.month < 12 ? income.month : 0;
+            row.insertCell(0).textContent = monthNames[monthIndex];
+            
+            // Year
+            row.insertCell(1).textContent = income.year;
+            
+            // Amount (formatted)
+            const amountCell = row.insertCell(2);
+            amountCell.textContent = analyzer.formatCurrency(income.amount);
+            amountCell.style.color = 'var(--success-color)';
+            
+            // Action button
+            const actionCell = row.insertCell(3);
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'action-button';
+            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteButton.addEventListener('click', () => removeActualIncome(income.month, income.year));
+            actionCell.appendChild(deleteButton);
+        } catch (err) {
+            console.error("Error creating row for income:", err, income);
+        }
+    });
+}
+
+// Add an actual income
+function addActualIncome() {
+    const month = document.getElementById('income-month-selector').value;
+    const year = document.getElementById('income-year-selector').value;
+    const amount = document.getElementById('actual-income').value;
+    
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        showNotification("Please enter a valid positive income amount", "warning");
+        return;
+    }
+    
+    const result = analyzer.addActualIncome(month, year, amount);
+    
+    if (result.success) {
+        // Clear input field
+        document.getElementById('actual-income').value = '';
+        
+        // Show success notification
+        showNotification(result.message, 'success');
+        
+        // Update the table and chart
+        updateActualIncomesTable();
+        updateChart();
+        
+        // Update statistics
+        updateStatistics();
+    } else {
+        showNotification(result.message, 'error');
+    }
+}
+
+// Remove an actual income
+function removeActualIncome(month, year) {
+    const result = analyzer.removeActualIncome(month, year);
+    
+    if (result.success) {
+        // Show success notification
+        showNotification(result.message, 'success');
+        
+        // Update the table and statistics
+        updateActualIncomesTable();
+        updateStatistics();
+        updateChart();
     } else {
         showNotification(result.message, 'error');
     }

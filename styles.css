@@ -448,7 +448,7 @@ header h1 i {
 }
 
 /* Actual Data Import Section */
-.actual-data-import-section {
+.actual-data-import-section, .actual-income-import-section {
     background-color: white;
     padding: 20px;
     border-radius: var(--border-radius);
