@@ -1341,35 +1341,45 @@ function resetUI() {
 // Update the entire UI
 function updateUI() {
     try {
+        console.log("Starting UI update...");
+        
         // Update statistics
+        console.log("Updating statistics...");
         updateStatistics();
         
         // Project cash flow for all scenarios
+        console.log("Projecting cash flow...");
         projectCashFlow();
         
         // Update scenario results
+        console.log("Updating scenario results...");
         updateScenarioResults();
         
         // Update chart
+        console.log("Updating chart...");
         updateChart();
         
         // Update income lists
+        console.log("Updating income lists...");
         updateIncomeList();
         
         // Check if the actual expenses table exists before updating it
         if (document.getElementById('actual-expenses-table')) {
-            // Update actual expenses table
+            console.log("Updating actual expenses table...");
             updateActualExpensesTable();
         }
         
         // Check if the actual incomes table exists before updating it
         if (document.getElementById('actual-incomes-table')) {
-            // Update actual incomes table
+            console.log("Updating actual incomes table...");
             updateActualIncomesTable();
         }
+        
+        console.log("UI update completed successfully");
     } catch (error) {
         console.error("Error updating UI:", error);
-        showNotification("An error occurred while updating the UI. Please check the console for details.", "error");
+        console.error("Error stack:", error.stack);
+        showNotification(`UI update error: ${error.message}. Please check the console for details.`, "error");
     }
 }
 
@@ -1541,136 +1551,161 @@ function updateStatistics() {
 
 // Update historical insights display
 function updateHistoricalInsights() {
-    const historicalExpensesElement = document.getElementById('historical-expenses');
-    const historicalIncomeElement = document.getElementById('historical-income');
-    const expenseGrowthElement = document.getElementById('expense-growth');
-    const incomeGrowthElement = document.getElementById('income-growth');
-    
-    if (analyzer.historicalTrends) {
-        // Historical expenses
-        if (historicalExpensesElement) {
-            historicalExpensesElement.textContent = analyzer.formatCurrency(analyzer.historicalTrends.averageExpenses);
-        }
+    try {
+        const historicalExpensesElement = document.getElementById('historical-expenses');
+        const historicalIncomeElement = document.getElementById('historical-income');
+        const expenseGrowthElement = document.getElementById('expense-growth');
+        const incomeGrowthElement = document.getElementById('income-growth');
         
-        // Historical income
-        if (historicalIncomeElement) {
-            historicalIncomeElement.textContent = analyzer.formatCurrency(analyzer.historicalTrends.averageIncomes);
-        }
-        
-        // Expense growth rate
-        if (expenseGrowthElement) {
-            const expenseGrowth = analyzer.historicalTrends.expenseGrowthRate;
-            const expenseGrowthPercent = (expenseGrowth * 100).toFixed(1);
-            expenseGrowthElement.textContent = `${expenseGrowthPercent > 0 ? '+' : ''}${expenseGrowthPercent}%`;
-            
-            if (expenseGrowth > 0.05) {
-                expenseGrowthElement.className = 'insight-value negative';
-            } else if (expenseGrowth < -0.05) {
-                expenseGrowthElement.className = 'insight-value positive';
-            } else {
-                expenseGrowthElement.className = 'insight-value';
+        if (analyzer.historicalTrends) {
+            // Historical expenses
+            if (historicalExpensesElement) {
+                historicalExpensesElement.textContent = analyzer.formatCurrency(analyzer.historicalTrends.averageExpenses);
             }
-        }
-        
-        // Income growth rate
-        if (incomeGrowthElement) {
-            const incomeGrowth = analyzer.historicalTrends.incomeGrowthRate;
-            const incomeGrowthPercent = (incomeGrowth * 100).toFixed(1);
-            incomeGrowthElement.textContent = `${incomeGrowth > 0 ? '+' : ''}${incomeGrowthPercent}%`;
             
-            if (incomeGrowth > 0.05) {
-                incomeGrowthElement.className = 'insight-value positive';
-            } else if (incomeGrowth < -0.05) {
-                incomeGrowthElement.className = 'insight-value negative';
-            } else {
-                incomeGrowthElement.className = 'insight-value';
+            // Historical income
+            if (historicalIncomeElement) {
+                historicalIncomeElement.textContent = analyzer.formatCurrency(analyzer.historicalTrends.averageIncomes);
             }
+            
+            // Expense growth rate
+            if (expenseGrowthElement) {
+                const expenseGrowth = analyzer.historicalTrends.expenseGrowthRate;
+                const expenseGrowthPercent = (expenseGrowth * 100).toFixed(1);
+                expenseGrowthElement.textContent = `${expenseGrowthPercent > 0 ? '+' : ''}${expenseGrowthPercent}%`;
+                
+                if (expenseGrowth > 0.05) {
+                    expenseGrowthElement.className = 'insight-value negative';
+                } else if (expenseGrowth < -0.05) {
+                    expenseGrowthElement.className = 'insight-value positive';
+                } else {
+                    expenseGrowthElement.className = 'insight-value';
+                }
+            }
+            
+            // Income growth rate
+            if (incomeGrowthElement) {
+                const incomeGrowth = analyzer.historicalTrends.incomeGrowthRate;
+                const incomeGrowthPercent = (incomeGrowth * 100).toFixed(1);
+                incomeGrowthElement.textContent = `${incomeGrowth > 0 ? '+' : ''}${incomeGrowthPercent}%`;
+                
+                if (incomeGrowth > 0.05) {
+                    incomeGrowthElement.className = 'insight-value positive';
+                } else if (incomeGrowth < -0.05) {
+                    incomeGrowthElement.className = 'insight-value negative';
+                } else {
+                    incomeGrowthElement.className = 'insight-value';
+                }
+            }
+        } else {
+            // No historical data available
+            if (historicalExpensesElement) historicalExpensesElement.textContent = 'N/A';
+            if (historicalIncomeElement) historicalIncomeElement.textContent = 'N/A';
+            if (expenseGrowthElement) expenseGrowthElement.textContent = 'N/A';
+            if (incomeGrowthElement) incomeGrowthElement.textContent = 'N/A';
         }
-    } else {
-        // No historical data available
-        if (historicalExpensesElement) historicalExpensesElement.textContent = 'N/A';
-        if (historicalIncomeElement) historicalIncomeElement.textContent = 'N/A';
-        if (expenseGrowthElement) expenseGrowthElement.textContent = 'N/A';
-        if (incomeGrowthElement) incomeGrowthElement.textContent = 'N/A';
+    } catch (error) {
+        console.error("Error updating historical insights:", error);
+        // Gracefully handle missing elements by setting them to N/A
+        try {
+            if (document.getElementById('historical-expenses')) document.getElementById('historical-expenses').textContent = 'N/A';
+            if (document.getElementById('historical-income')) document.getElementById('historical-income').textContent = 'N/A';
+            if (document.getElementById('expense-growth')) document.getElementById('expense-growth').textContent = 'N/A';
+            if (document.getElementById('income-growth')) document.getElementById('income-growth').textContent = 'N/A';
+        } catch (e) {
+            console.error("Error handling historical insights fallback:", e);
+        }
     }
 }
 
 // Update data completeness indicators
 function updateDataCompleteness() {
-    // Historical data progress
-    const historicalProgress = document.getElementById('historical-progress');
-    const historicalStatus = document.getElementById('historical-status');
-    
-    if (analyzer.transactions && analyzer.transactions.length > 0) {
-        if (historicalProgress) {
-            historicalProgress.style.width = '100%';
-            historicalProgress.className = 'progress-fill complete';
-        }
-        if (historicalStatus) {
-            const monthsOfData = Math.ceil(analyzer.transactions.length / 30); // Rough estimate
-            historicalStatus.textContent = `${monthsOfData} months`;
-        }
-    } else {
-        if (historicalProgress) {
-            historicalProgress.style.width = '0%';
-            historicalProgress.className = 'progress-fill';
-        }
-        if (historicalStatus) historicalStatus.textContent = 'Not loaded';
-    }
-    
-    // Actual expenses progress
-    const expensesProgress = document.getElementById('expenses-progress');
-    const expensesStatus = document.getElementById('expenses-status');
-    
-    const expenseMonths = analyzer.actualExpenses.length;
-    const expenseCompleteness = Math.min(expenseMonths / 3, 1) * 100; // Consider 3 months as "good"
-    
-    if (expensesProgress) {
-        expensesProgress.style.width = `${expenseCompleteness}%`;
-        if (expenseMonths >= 3) {
-            expensesProgress.className = 'progress-fill complete';
-        } else if (expenseMonths > 0) {
-            expensesProgress.className = 'progress-fill partial';
+    try {
+        // Historical data progress
+        const historicalProgress = document.getElementById('historical-progress');
+        const historicalStatus = document.getElementById('historical-status');
+        
+        if (analyzer.transactions && analyzer.transactions.length > 0) {
+            if (historicalProgress) {
+                historicalProgress.style.width = '100%';
+                historicalProgress.className = 'progress-fill complete';
+            }
+            if (historicalStatus) {
+                const monthsOfData = Math.ceil(analyzer.transactions.length / 30); // Rough estimate
+                historicalStatus.textContent = `${monthsOfData} months`;
+            }
         } else {
-            expensesProgress.className = 'progress-fill';
+            if (historicalProgress) {
+                historicalProgress.style.width = '0%';
+                historicalProgress.className = 'progress-fill';
+            }
+            if (historicalStatus) historicalStatus.textContent = 'Not loaded';
         }
-    }
-    
-    if (expensesStatus) {
-        expensesStatus.textContent = `${expenseMonths} months`;
-    }
-    
-    // Actual incomes progress
-    const incomesProgress = document.getElementById('incomes-progress');
-    const incomesStatus = document.getElementById('incomes-status');
-    
-    const incomeMonths = analyzer.actualIncomes.length;
-    const incomeCompleteness = Math.min(incomeMonths / 3, 1) * 100; // Consider 3 months as "good"
-    
-    if (incomesProgress) {
-        incomesProgress.style.width = `${incomeCompleteness}%`;
-        if (incomeMonths >= 3) {
-            incomesProgress.className = 'progress-fill complete';
-        } else if (incomeMonths > 0) {
-            incomesProgress.className = 'progress-fill partial';
-        } else {
-            incomesProgress.className = 'progress-fill';
+        
+        // Actual expenses progress
+        const expensesProgress = document.getElementById('expenses-progress');
+        const expensesStatus = document.getElementById('expenses-status');
+        
+        const expenseMonths = analyzer.actualExpenses.length;
+        const expenseCompleteness = Math.min(expenseMonths / 3, 1) * 100; // Consider 3 months as "good"
+        
+        if (expensesProgress) {
+            expensesProgress.style.width = `${expenseCompleteness}%`;
+            if (expenseMonths >= 3) {
+                expensesProgress.className = 'progress-fill complete';
+            } else if (expenseMonths > 0) {
+                expensesProgress.className = 'progress-fill partial';
+            } else {
+                expensesProgress.className = 'progress-fill';
+            }
         }
-    }
-    
-    if (incomesStatus) {
-        incomesStatus.textContent = `${incomeMonths} months`;
-    }
-    
-    // Update recommendation
-    const recommendationText = document.getElementById('recommendation-text');
-    if (recommendationText) {
-        if (expenseMonths === 0 && incomeMonths === 0) {
-            recommendationText.innerHTML = '<i class="fas fa-lightbulb"></i> Start by adding actual expense and income data for more accurate projections.';
-        } else if (expenseMonths < 3 || incomeMonths < 3) {
-            recommendationText.innerHTML = '<i class="fas fa-chart-line"></i> Add more months of data (aim for 3+ months) to improve projection accuracy.';
-        } else {
-            recommendationText.innerHTML = '<i class="fas fa-check-circle"></i> Great! You have sufficient data for accurate projections.';
+        
+        if (expensesStatus) {
+            expensesStatus.textContent = `${expenseMonths} months`;
+        }
+        
+        // Actual incomes progress
+        const incomesProgress = document.getElementById('incomes-progress');
+        const incomesStatus = document.getElementById('incomes-status');
+        
+        const incomeMonths = analyzer.actualIncomes.length;
+        const incomeCompleteness = Math.min(incomeMonths / 3, 1) * 100; // Consider 3 months as "good"
+        
+        if (incomesProgress) {
+            incomesProgress.style.width = `${incomeCompleteness}%`;
+            if (incomeMonths >= 3) {
+                incomesProgress.className = 'progress-fill complete';
+            } else if (incomeMonths > 0) {
+                incomesProgress.className = 'progress-fill partial';
+            } else {
+                incomesProgress.className = 'progress-fill';
+            }
+        }
+        
+        if (incomesStatus) {
+            incomesStatus.textContent = `${incomeMonths} months`;
+        }
+        
+        // Update recommendation
+        const recommendationText = document.getElementById('recommendation-text');
+        if (recommendationText) {
+            if (expenseMonths === 0 && incomeMonths === 0) {
+                recommendationText.innerHTML = '<i class="fas fa-lightbulb"></i> Start by adding actual expense and income data for more accurate projections.';
+            } else if (expenseMonths < 3 || incomeMonths < 3) {
+                recommendationText.innerHTML = '<i class="fas fa-chart-line"></i> Add more months of data (aim for 3+ months) to improve projection accuracy.';
+            } else {
+                recommendationText.innerHTML = '<i class="fas fa-check-circle"></i> Great! You have sufficient data for accurate projections.';
+            }
+        }
+    } catch (error) {
+        console.error("Error updating data completeness:", error);
+        // Gracefully handle missing elements
+        try {
+            if (document.getElementById('historical-status')) document.getElementById('historical-status').textContent = 'Error';
+            if (document.getElementById('expenses-status')) document.getElementById('expenses-status').textContent = 'Error';
+            if (document.getElementById('incomes-status')) document.getElementById('incomes-status').textContent = 'Error';
+        } catch (e) {
+            console.error("Error handling data completeness fallback:", e);
         }
     }
 }
