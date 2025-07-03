@@ -179,37 +179,104 @@
             <div class="two-column-layout">
                 <div class="left-column">
                     <div class="projection-results">
-                        <h2>Current Status</h2>
-                        <div class="stats">
-                            <div class="stat-card">
-                                <div class="stat-title">Current Balance</div>
-                                <div id="current-balance" class="stat-value">N/A</div>
+                        <h2>Financial Overview</h2>
+                        
+                        <!-- Current Status -->
+                        <div class="current-status-section">
+                            <h3>📊 Current Status</h3>
+                            <div class="stats">
+                                <div class="stat-card">
+                                    <div class="stat-title">Current Balance</div>
+                                    <div id="current-balance" class="stat-value">N/A</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Monthly Expenses</div>
+                                    <div id="monthly-expenses" class="stat-value">N/A</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Monthly Income</div>
+                                    <div id="monthly-income" class="stat-value">N/A</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Net Monthly</div>
+                                    <div id="net-monthly" class="stat-value">N/A</div>
+                                </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-title">Monthly Expenses</div>
-                                <div id="monthly-expenses" class="stat-value">N/A</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-title">Monthly Income</div>
-                                <div id="monthly-income" class="stat-value">N/A</div>
+                            <div class="data-source-info">
+                                <p id="data-source-indicator"><i class="fas fa-info-circle"></i> <span id="data-source-text">Using CSV transaction data</span></p>
                             </div>
                         </div>
-                        <div class="data-source-info">
-                            <p id="data-source-indicator"><i class="fas fa-info-circle"></i> <span id="data-source-text">Using CSV transaction data</span></p>
+                        
+                        <!-- Historical Insights -->
+                        <div class="historical-insights-section">
+                            <h3>📈 Historical Insights</h3>
+                            <div class="insights-grid">
+                                <div class="insight-card">
+                                    <div class="insight-title">Average Monthly Expenses (Historical)</div>
+                                    <div id="historical-expenses" class="insight-value">N/A</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-title">Average Monthly Income (Historical)</div>
+                                    <div id="historical-income" class="insight-value">N/A</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-title">Expense Growth Rate</div>
+                                    <div id="expense-growth" class="insight-value">N/A</div>
+                                </div>
+                                <div class="insight-card">
+                                    <div class="insight-title">Income Growth Rate</div>
+                                    <div id="income-growth" class="insight-value">N/A</div>
+                                </div>
+                            </div>
                         </div>
-                        <h3>Actual Data</h3>
-                        <div class="stats actual-stats">
-                            <div class="stat-card">
-                                <div class="stat-title">Actual Balance</div>
-                                <div id="actual-balance" class="stat-value">N/A</div>
+                        
+                        <!-- Progress Indicator -->
+                        <div class="data-completeness-section">
+                            <h3>🎯 Data Completeness</h3>
+                            <div class="completeness-indicator">
+                                <div class="progress-item">
+                                    <span class="progress-label">Historical Data (CSV)</span>
+                                    <div class="progress-bar">
+                                        <div id="historical-progress" class="progress-fill"></div>
+                                    </div>
+                                    <span id="historical-status" class="progress-status">Not loaded</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span class="progress-label">Actual Expenses</span>
+                                    <div class="progress-bar">
+                                        <div id="expenses-progress" class="progress-fill"></div>
+                                    </div>
+                                    <span id="expenses-status" class="progress-status">0 months</span>
+                                </div>
+                                <div class="progress-item">
+                                    <span class="progress-label">Actual Incomes</span>
+                                    <div class="progress-bar">
+                                        <div id="incomes-progress" class="progress-fill"></div>
+                                    </div>
+                                    <span id="incomes-status" class="progress-status">0 months</span>
+                                </div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-title">Actual Monthly Expenses</div>
-                                <div id="actual-monthly-expenses" class="stat-value">N/A</div>
+                            <div class="recommendation">
+                                <p id="recommendation-text"><i class="fas fa-lightbulb"></i> Add actual expense and income data for more accurate projections.</p>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-title">Actual Months Until Broke</div>
-                                <div id="actual-months-until-broke" class="stat-value">N/A</div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="quick-actions-section">
+                            <h3>⚡ Quick Actions</h3>
+                            <div class="quick-action-buttons">
+                                <button id="quick-add-current-month" class="action-button">
+                                    <i class="fas fa-plus"></i> Add This Month's Data
+                                </button>
+                                <button id="quick-add-last-3-months" class="action-button">
+                                    <i class="fas fa-calendar"></i> Add Last 3 Months
+                                </button>
+                                <button id="jump-to-expenses" class="action-button">
+                                    <i class="fas fa-arrow-down"></i> Add Actual Expenses
+                                </button>
+                                <button id="jump-to-incomes" class="action-button">
+                                    <i class="fas fa-arrow-down"></i> Add Actual Incomes
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -274,8 +341,30 @@
                                 <input type="checkbox" id="show-actual-data" checked>
                                 Show Actual Data
                             </label>
+                            <label>
+                                <input type="checkbox" id="show-historical-trend" checked>
+                                Show Historical Trend
+                            </label>
+                            <label>
+                                <input type="checkbox" id="show-confidence-bands" checked>
+                                Show Confidence Bands
+                            </label>
                         </div>
                         <canvas id="cash-flow-chart"></canvas>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #3498db;"></div>
+                                <span>Current Projection</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #f39c12;"></div>
+                                <span>Actual Performance</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #27ae60;"></div>
+                                <span>Historical Trend</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
