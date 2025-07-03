@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-Frame-Options" content="ALLOW-FROM https://www.notion.so/">
-    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://www.notion.so https://*.notion.so;">
     <title>Cash Flow Projection Tool</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -131,6 +129,9 @@
                                 <div class="stat-title">Monthly Expenses</div>
                                 <div id="monthly-expenses" class="stat-value">N/A</div>
                             </div>
+                        </div>
+                        <div class="data-source-info">
+                            <p id="data-source-indicator"><i class="fas fa-info-circle"></i> <span id="data-source-text">Using CSV transaction data</span></p>
                         </div>
                         <h3>Actual Data</h3>
                         <div class="stats actual-stats">

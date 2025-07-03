@@ -1015,29 +1015,83 @@ function updateUI() {
 function updateStatistics() {
     if (!analyzer.transactions) return;
     
-    // Update current balance
-    document.getElementById('current-balance').textContent = analyzer.formatCurrency(analyzer.balance);
+    // Prioritize actual data when available
+    const hasActualData = analyzer.actualExpenses.length > 0;
     
-    // Update monthly expenses
-    const monthlyExpenses = analyzer.calculateMonthlyExpenses();
-    document.getElementById('monthly-expenses').textContent = analyzer.formatCurrency(monthlyExpenses);
+    // Update current balance - use actual balance if available, otherwise use CSV balance
+    const currentBalance = hasActualData ? analyzer.calculateActualBalance() : analyzer.balance;
+    const currentBalanceElement = document.getElementById('current-balance');
+    if (currentBalance !== null) {
+        currentBalanceElement.textContent = analyzer.formatCurrency(currentBalance);
+        // Add visual indicator if using actual data
+        if (hasActualData) {
+            currentBalanceElement.style.color = 'var(--primary-color)';
+            currentBalanceElement.title = 'Using actual expense data';
+        } else {
+            currentBalanceElement.style.color = '';
+            currentBalanceElement.title = 'Using CSV transaction data';
+        }
+    } else {
+        currentBalanceElement.textContent = analyzer.formatCurrency(analyzer.balance);
+        currentBalanceElement.style.color = '';
+        currentBalanceElement.title = 'Using CSV transaction data';
+    }
     
-    // Update actual balance
+    // Update monthly expenses - use actual expenses if available, otherwise use CSV calculated expenses
+    const monthlyExpenses = hasActualData ? analyzer.calculateActualMonthlyExpenses() : analyzer.calculateMonthlyExpenses();
+    const monthlyExpensesElement = document.getElementById('monthly-expenses');
+    if (monthlyExpenses !== null) {
+        monthlyExpensesElement.textContent = analyzer.formatCurrency(monthlyExpenses);
+        // Add visual indicator if using actual data
+        if (hasActualData) {
+            monthlyExpensesElement.style.color = 'var(--primary-color)';
+            monthlyExpensesElement.title = 'Using actual expense data';
+        } else {
+            monthlyExpensesElement.style.color = '';
+            monthlyExpensesElement.title = 'Using CSV transaction data';
+        }
+    } else {
+        monthlyExpensesElement.textContent = analyzer.formatCurrency(analyzer.calculateMonthlyExpenses());
+        monthlyExpensesElement.style.color = '';
+        monthlyExpensesElement.title = 'Using CSV transaction data';
+    }
+    
+    // Update actual balance (keep this section for reference/comparison)
     const actualBalance = analyzer.calculateActualBalance();
     const actualBalanceElement = document.getElementById('actual-balance');
     if (actualBalance !== null) {
         actualBalanceElement.textContent = analyzer.formatCurrency(actualBalance);
+        // Dim this section if we're using actual data in current status
+        if (hasActualData) {
+            actualBalanceElement.style.opacity = '0.6';
+            actualBalanceElement.title = 'This data is now being used in Current Status above';
+        } else {
+            actualBalanceElement.style.opacity = '1';
+            actualBalanceElement.title = '';
+        }
     } else {
         actualBalanceElement.textContent = 'N/A';
+        actualBalanceElement.style.opacity = '1';
+        actualBalanceElement.title = '';
     }
     
-    // Update actual monthly expenses
+    // Update actual monthly expenses (keep this section for reference/comparison)
     const actualMonthlyExpenses = analyzer.calculateActualMonthlyExpenses();
     const actualMonthlyExpensesElement = document.getElementById('actual-monthly-expenses');
     if (actualMonthlyExpenses !== null) {
         actualMonthlyExpensesElement.textContent = analyzer.formatCurrency(actualMonthlyExpenses);
+        // Dim this section if we're using actual data in current status
+        if (hasActualData) {
+            actualMonthlyExpensesElement.style.opacity = '0.6';
+            actualMonthlyExpensesElement.title = 'This data is now being used in Current Status above';
+        } else {
+            actualMonthlyExpensesElement.style.opacity = '1';
+            actualMonthlyExpensesElement.title = '';
+        }
     } else {
         actualMonthlyExpensesElement.textContent = 'N/A';
+        actualMonthlyExpensesElement.style.opacity = '1';
+        actualMonthlyExpensesElement.title = '';
     }
     
     // Update actual months until broke
@@ -1045,8 +1099,32 @@ function updateStatistics() {
     const actualMonthsUntilBrokeElement = document.getElementById('actual-months-until-broke');
     if (actualMonthsUntilBroke !== null) {
         actualMonthsUntilBrokeElement.textContent = Math.floor(actualMonthsUntilBroke).toString();
+        // Dim this section if we're using actual data in current status
+        if (hasActualData) {
+            actualMonthsUntilBrokeElement.style.opacity = '0.6';
+            actualMonthsUntilBrokeElement.title = 'This data is now being used in Current Status above';
+        } else {
+            actualMonthsUntilBrokeElement.style.opacity = '1';
+            actualMonthsUntilBrokeElement.title = '';
+        }
     } else {
         actualMonthsUntilBrokeElement.textContent = 'N/A';
+        actualMonthsUntilBrokeElement.style.opacity = '1';
+        actualMonthsUntilBrokeElement.title = '';
+    }
+    
+    // Update data source indicator
+    const dataSourceTextElement = document.getElementById('data-source-text');
+    if (dataSourceTextElement) {
+        if (hasActualData) {
+            dataSourceTextElement.textContent = 'Using actual expense data (more accurate)';
+            dataSourceTextElement.style.color = 'var(--primary-color)';
+            dataSourceTextElement.style.fontWeight = 'bold';
+        } else {
+            dataSourceTextElement.textContent = 'Using CSV transaction data';
+            dataSourceTextElement.style.color = '';
+            dataSourceTextElement.style.fontWeight = '';
+        }
     }
 }
 
@@ -1403,7 +1481,10 @@ function projectCashFlow(monthsAhead = 24) {
 function projectBaseline(monthsAhead = 24) {
     if (!analyzer.transactions) return null;
     
-    const monthlyExpenses = analyzer.calculateMonthlyExpenses();
+    // Use actual expenses if available, otherwise use CSV calculated expenses
+    const hasActualData = analyzer.actualExpenses.length > 0;
+    const monthlyExpenses = hasActualData ? analyzer.calculateActualMonthlyExpenses() : analyzer.calculateMonthlyExpenses();
+    const startingBalance = hasActualData ? analyzer.calculateActualBalance() : analyzer.balance;
     
     try {
         // Get the last transaction date
@@ -1421,7 +1502,7 @@ function projectBaseline(monthsAhead = 24) {
             // Initial point (today)
             projection.push({
                 date: fallbackDate,
-                balance: analyzer.balance,
+                balance: startingBalance,
                 expenses: 0,
                 income: 0
             });
@@ -1451,7 +1532,7 @@ function projectBaseline(monthsAhead = 24) {
         // Initial point (today)
         projection.push({
             date: new Date(lastDate),
-            balance: analyzer.balance,
+            balance: startingBalance,
             expenses: 0,
             income: 0
         });
@@ -1482,7 +1563,7 @@ function projectBaseline(monthsAhead = 24) {
         
         projection.push({
             date: fallbackDate,
-            balance: analyzer.balance || 0,
+            balance: startingBalance || 0,
             expenses: 0,
             income: 0
         });
@@ -1493,7 +1574,7 @@ function projectBaseline(monthsAhead = 24) {
             
             projection.push({
                 date: projectedDate,
-                balance: (analyzer.balance || 0) - (monthlyExpenses * i),
+                balance: (startingBalance || 0) - (monthlyExpenses * i),
                 expenses: monthlyExpenses,
                 income: 0
             });
@@ -1514,9 +1595,12 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
     }
     
     try {
-        const monthlyExpenses = analyzer.calculateMonthlyExpenses();
+        // Use actual expenses if available, otherwise use CSV calculated expenses
+        const hasActualData = analyzer.actualExpenses.length > 0;
+        const monthlyExpenses = hasActualData ? analyzer.calculateActualMonthlyExpenses() : analyzer.calculateMonthlyExpenses();
         const burnRateFactor = analyzer.scenarios[scenarioId].burnRateFactor;
         const adjustedMonthlyExpenses = monthlyExpenses * burnRateFactor;
+        const startingBalance = hasActualData ? analyzer.calculateActualBalance() : analyzer.balance;
         
         // Get the last transaction date
         const lastDate = analyzer.transactions[analyzer.transactions.length - 1].transactionDate;
@@ -1536,7 +1620,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
             
             projection.push({
                 date: fallbackDate,
-                balance: analyzer.balance || 0,
+                balance: startingBalance || 0,
                 expenses: 0,
                 income: 0
             });
@@ -1547,7 +1631,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
                 
                 projection.push({
                     date: projectedDate,
-                    balance: (analyzer.balance || 0) - (adjustedMonthlyExpenses * i),
+                    balance: (startingBalance || 0) - (adjustedMonthlyExpenses * i),
                     expenses: adjustedMonthlyExpenses,
                     income: 0
                 });
@@ -1563,7 +1647,7 @@ function projectCashFlowForScenario(scenarioId, monthsAhead = 24) {
         // Initial point (today)
         projection.push({
             date: new Date(lastDate),
-            balance: analyzer.balance,
+            balance: startingBalance,
             expenses: 0,
             income: 0
         });
